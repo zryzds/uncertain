@@ -1,0 +1,26 @@
+# High-Precision UAV-Satellite Image Matching Requirements
+
+# Core dependencies
+numpy>=1.20.0
+scipy>=1.7.0
+opencv-python>=4.5.0
+
+# Configuration
+pyyaml>=5.4.0
+
+# Visualization (optional but recommended)
+matplotlib>=3.3.0
+
+# Optional: Advanced optimization libraries
+# If you want to use GTSAM for factor graph optimization (requires C++ compilation):
+# pip install gtsam
+# OR if you want to use Ceres Solver (requires C++ compilation):
+# pip install PyCeres
+
+# Optional: GPU acceleration
+# cupy>=9.0.0  # For CUDA-enabled GPUs
+
+# Development dependencies (optional)
+# pytest>=6.2.0
+# black>=21.0
+# flake8>=3.9.0
