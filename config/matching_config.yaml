@@ -1,0 +1,100 @@
+# High-Precision UAV-Satellite Image Matching Configuration
+
+# Camera parameters
+camera:
+  focal_length: 35.0  # mm
+  sensor_width: 23.6  # mm
+  sensor_height: 15.7  # mm
+  intrinsic_matrix:
+    - [3000.0, 0, 2000.0]
+    - [0, 3000.0, 1500.0]
+    - [0, 0, 1.0]
+
+# IMU sensor parameters
+imu:
+  roll_std: 0.01      # radians (~0.57 degrees)
+  pitch_std: 0.01     # radians (~0.57 degrees)
+  yaw_std: 0.05       # radians (~2.87 degrees, yaw is less accurate)
+  altitude_std: 2.0   # meters
+
+# GPS parameters (optional)
+gps:
+  position_std: 5.0   # meters
+  enabled: false      # Set to true if GPS data is available
+
+# Stage 2: IMU-Guided Geometric Constraint Optimization
+stage2:
+  optical_flow:
+    window_size: 21           # Lucas-Kanade window size
+    pyramid_levels: 3         # Number of pyramid levels
+    max_iterations: 30        # Maximum iterations per level
+    convergence_threshold: 0.01
+
+  bayesian_optimization:
+    max_iterations: 50
+    convergence_threshold: 1.0e-5
+    visual_noise: 1.5         # Visual matching noise (pixels)
+
+  imu_weight_adaptive: true   # Dynamically adjust IMU weight based on uncertainty
+
+# Stage 3: Factor Graph Multi-Modal Fusion
+stage3:
+  factor_graph:
+    visual_noise: 1.5         # pixels
+    imu_noise: 1.0            # pixels
+    gps_noise: 5.0            # pixels (if GPS is enabled)
+    smooth_noise: 0.5         # pixels
+    neighbor_radius: 40.0     # pixels (satellite image scale)
+    k_neighbors: 5            # Number of neighbors for smoothness
+
+  optimization:
+    algorithm: "LevenbergMarquardt"
+    max_iterations: 100
+    convergence_threshold: 1.0e-5
+    initial_lambda: 1.0e-3
+
+  robust_kernel:
+    enabled: true
+    type: "huber"             # "huber" or "cauchy"
+    threshold: 1.5            # MAD multiplier
+
+# Stage 5: Subpixel Template Matching
+stage5:
+  template:
+    size_min: 24              # Minimum template size (pixels)
+    size_max: 40              # Maximum template size (pixels)
+    adaptive: true            # Adapt size based on local texture
+    texture_threshold: 100.0  # Threshold for high/low texture
+
+  search:
+    radius_base: 5            # Base search radius (pixels)
+    radius_scale_factor: 3.0  # Multiplier for uncertainty-based radius
+
+  ncc_threshold: 0.7          # Minimum NCC for valid match
+  peak_uniqueness_threshold: 1.2  # min(max_peak / second_peak)
+
+  subpixel:
+    method: "quadratic"       # "quadratic" or "bicubic"
+    offset_limit: 0.5         # Maximum subpixel offset (pixels)
+
+  iteration:
+    max_iterations: 3
+    convergence_threshold: 0.01  # pixels
+
+  confidence:
+    weights: [0.5, 0.3, 0.2]  # [ncc_response, peak_uniqueness, uncertainty]
+    threshold: 0.6            # Minimum confidence for high-quality match
+
+# Output configuration
+output:
+  format: "json"              # "json", "csv", or "npz"
+  include_uncertainty: true
+  include_confidence: true
+  filter_low_quality: true
+  cross_validation: false     # Enable backward matching check
+
+# Performance tuning
+performance:
+  use_gpu: false              # Use GPU acceleration if available
+  num_threads: 4              # Number of threads for parallel processing
+  batch_size: 100             # Batch size for processing multiple points
